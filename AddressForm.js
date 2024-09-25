@@ -1,124 +1,50 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import 'bootstrap/dist/css/bootstrap.min.css';
 
 const AddressForm = () => {
-    const [submittedData, setSubmittedData] = useState([]);
+  const initialValues = { addresses: [{ title: '', street: '', country: '', pincode: '' }] };
+  const validationSchema = Yup.object().shape({
+    addresses: Yup.array().of(
+      Yup.object().shape({
+        title: Yup.string().required('Title is required').max(100).matches(/^[^\d]+$/, 'No numbers allowed').matches(/^[^ ]+( [^ ]+)?$/, 'Only one space allowed'),
+        street: Yup.string().required('Street is required').max(100).matches(/^[^\d]+$/, 'No numbers allowed').matches(/^[^ ]+( [^ ]+)?$/, 'Only one space allowed'),
+        country: Yup.string().required('Country is required').max(100).matches(/^[^\d]+$/, 'No numbers allowed').matches(/^[^ ]+( [^ ]+)?$/, 'Only one space allowed'),
+        pincode: Yup.string().required('Pincode is required').length(6).matches(/^[1-9][0-9]{5}$/, 'Must be 6 digits and not start with 0'),
+      })
+    )
+  });
 
-    const validationSchema = Yup.object().shape({
-        title: Yup.string()
-            .required("Title is required"),
-        street: Yup.string()
-            .required("Street is required"),
-        city: Yup.string()
-            .required("City is required"),
-        country: Yup.string()
-            .required("Country is required"),
-        pincode: Yup.string()
-            .matches(/^[0-9]{6}$/, "Pincode must be exactly 6 digits")
-            .required("Pincode is required"),
-    });
-
-    const handleDelete = (index) => {
-        const newData = submittedData.filter((_, i) => i !== index);
-        setSubmittedData(newData);
-    };
-
-    return (
-        <div className="container mt-5">
-            <h2>Address Form</h2>
-            <Formik
-                initialValues={{
-                    title: '',
-                    street: '',
-                    city: '',
-                    country: '',
-                    pincode: '',
-                }}
-                validationSchema={validationSchema}
-                onSubmit={(values, { resetForm }) => {
-                    setSubmittedData([...submittedData, values]);
-                    resetForm();
-                }}
-            >
-                {({ isSubmitting }) => (
-                    <Form>
-                        <div className="form-group">
-                            <label htmlFor="title">Title</label>
-                            <Field 
-                                type="text" 
-                                name="title" 
-                                className="form-control" 
-                            />
-                            <ErrorMessage name="title" component="div" className="text-danger" />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="street">Street</label>
-                            <Field 
-                                type="text" 
-                                name="street" 
-                                className="form-control" 
-                            />
-                            <ErrorMessage name="street" component="div" className="text-danger" />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="city">City</label>
-                            <Field 
-                                type="text" 
-                                name="city" 
-                                className="form-control" 
-                            />
-                            <ErrorMessage name="city" component="div" className="text-danger" />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlAddressFormFor="country">Country</label>
-                            <Field 
-                                type="text" 
-                                name="country" 
-                                className="form-control" 
-                            />
-                            <ErrorMessage name="country" component="div" className="text-danger" />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="pincode">Pincode</label>
-                            <Field 
-                                type="text" 
-                                name="pincode" 
-                                className="form-control" 
-                            />
-                            <ErrorMessage name="pincode" component="div" className="text-danger" />
-                        </div>
-
-                        <button type="submit" disabled={isSubmitting} className="btn btn-primary mt-3">
-                            Add
-                        </button>
-                    </Form>
-                )}
-            </Formik>
-
-            {submittedData.length > 0 && (
-                <div className="mt-5">
-                    <h3>Submitted Addresses:</h3>
-                    <ul className="list-group">
-                        {submittedData.map((data, index) => (
-                            <li key={index} className="list-group-item d-flex justify-content-between align-items-center">
-                                <strong>{data.title}</strong>: {data.street}, {data.city}, {data.country}, {data.pincode}
-                                
-                                <button onClick={() => handleDelete(index)} className="btn btn-danger btn-sm">
-                                    Delete
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
+  return (
+    <Formik initialValues={initialValues} validationSchema={validationSchema} onSubmit={(values, { resetForm }) => { console.log('Form data', values); resetForm(); }}>
+      {({ values, setFieldValue }) => (
+        <Form style={{ padding: 20, backgroundColor: '#fff', borderRadius: 5, boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+          {values.addresses.map((address, index) => (
+            <div key={index}>
+              <h3>Address {index + 1}</h3>
+              {['title', 'street', 'country', 'pincode'].map(field => (
+                <div key={field}>
+                  <label htmlFor={`addresses.${index}.${field}`}>{field}</label>
+                  <Field name={`addresses.${index}.${field}`} type="text" style={{ width: 'calc(100% - 22px)', padding: 10, margin: '10px 0', borderRadius: 4, border: '1px solid #ccc' }} />
+                  <ErrorMessage name={`addresses.${index}.${fvalidatield}`} fieldcomponent="div" style={{ color: 'red' }} />
                 </div>
-            )}
-        </div>
-    );
+              ))}
+              <button type="button" onClick={() => {
+                if (index === 0 && Object.values(address).every(field => !field.trim())) alert('Cannot remove the first address when all fields are empty.');
+                else setFieldValue('addresses', values.addresses.filter((_, i) => i !== index));
+              }} style={{ backgroundColor: '#dc3545', color: '#fff', padding: 10, borderRadius: 4 }}>Remove Address</button>
+            </div>
+          ))}
+          <button type="button" onClick={() => {
+            const currentAddress = values.addresses[values.addresses.length - 1];
+            if (Object.values(currentAddress).every(field => field.trim()) && /^[1-9][0-9]{5}$/.test(currentAddress.pincode)) setFieldValue('addresses', [...values.addresses, { title: '', street: '', country: '', pincode: '' }]);
+            else alert('Please fill all fields correctly.');
+          }} style={{ backgroundColor: '#28a745', color: '#fff', padding: 10, borderRadius: 4 }}>Add Address</button>
+          <button type="submit" style={{ backgroundColor: '#007bff', color: '#fff', padding: 10, borderRadius: 4 }}>Submit</button>
+        </Form>
+      )}
+    </Formik>
+  );
 };
 
 export default AddressForm;
